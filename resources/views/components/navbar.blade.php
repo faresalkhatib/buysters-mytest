@@ -2,7 +2,7 @@
         <!-- logo -->
       <x-logo></x-logo>
       <div class="profile">
-        <span>Admin Name</span>
-        <button class="logout">Logout</button>
+        <span>{{ session('user.username') ?? session('user.email') }}</span>
+        <a href="{{ route('logout') }}" class="logout">Logout</a>
       </div>
     </div>

@@ -1,6 +1,10 @@
 import DataTable from 'datatables.net-dt';
-import 'datatables.net-responsive-dt';
+import Responsive from 'datatables.net-responsive-dt';
 
-let table = new DataTable('#myTable', {
+DataTable.Responsive = Responsive;
+import 'datatables.net-dt/css/dataTables.dataTables.min.css';
+
+let table = new DataTable('#mytable', {
     responsive: true
 });
+

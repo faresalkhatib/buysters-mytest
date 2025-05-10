@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
-class FirebaseController extends Controller
+class UsersController extends Controller
 {
 
     protected $auth;
@@ -14,8 +14,6 @@ class FirebaseController extends Controller
 
     public function __construct()
     {
-        $this->auth = app('firebase.auth');
-        $this->database = app('firebase.database');
         $this->firestore = app('firebase.firestore');
     }
 
@@ -23,7 +21,20 @@ class FirebaseController extends Controller
     {
         try {
             $usersCollection = $this->firestore->collection('users');
-            $users = $usersCollection->documents();
+            $documents = $usersCollection->documents();
+
+            $users = [];
+            foreach ($documents as $document) {
+                if ($document->exists()) {
+                    $data = $document->data();
+                    $users[] = [
+                        'username' => $data['username'] ?? null,
+                        'email' => $data['email'] ?? null,
+                        'image_url' => $data['image_url'] ?? null,
+                        'role' => $data['role'] ?? null,
+                    ];
+                }
+            }
 
             return view('users', compact('users'));
         } catch (\Throwable $e) {
@@ -33,5 +44,6 @@ class FirebaseController extends Controller
                 'message' => 'Failed to load users from Firestore.',
             ], 500);
         }
+
     }
 }
