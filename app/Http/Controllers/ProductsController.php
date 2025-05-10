@@ -13,7 +13,7 @@ class ProductsController extends Controller
     }
 
     public function index(){
-        // Step 1: Get all categories and map by ID
+
         $categoriesSnapshot = $this->firestore->collection('categories')->documents();
         $categories = [];
         foreach ($categoriesSnapshot as $catDoc) {
