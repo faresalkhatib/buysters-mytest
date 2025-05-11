@@ -1,20 +1,21 @@
 <?php
 
-use App\Http\Controllers\AuthController;
-use App\Http\Controllers\ProductsController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UsersController;
+use App\Http\Controllers\OrdersController;
+use App\Http\Controllers\ProductsController;
+use App\Http\Controllers\CategoriesController;
 
 Route::middleware(['firebase.auth', 'admin'])->group(function () {
     Route::get('/', function () {
         return view('panel');
     });
-    Route::get('orders', function () {
-        return view('orders');
-    });
 
-    Route::get('products' , [ProductsController::class , 'index']);
-    Route::get('users', [UsersController::class, 'index']);
+    Route::get('orders', [OrdersController::class,'index'])->name('order');
+    Route::get('products' , [ProductsController::class , 'index'])->name('product');
+    Route::get('users', [UsersController::class, 'index'])->name('user');
+    Route::get('categories' , [CategoriesController::class , 'index'])->name('category');
 
     Route::get('reports', function () {
         return view('reports');

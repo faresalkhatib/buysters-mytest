@@ -31,6 +31,7 @@ class ProductsController extends Controller
                 $categoryName = $categories[$data['categoryId']] ?? 'Unknown';
 
                 $products[] = [
+                    'id' => $doc->id(),
                     'name' => $data['name'] ?? '',
                     'price' => $data['price'] ?? 0,
                     'category' => $categoryName,

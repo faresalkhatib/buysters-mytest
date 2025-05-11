@@ -2,7 +2,7 @@
     <h1>welcome to products</h1>
     <table id="mytable" border="1">
         <thead>
-        <th>index</th>
+        <th>Product ID</th>
         <th>name</th>
         <th>price</th>
         <th>category</th>
@@ -10,9 +10,9 @@
         <th>seller</th>
         </thead>
         <tbody>
-        @foreach($products as $index => $product)
+        @foreach($products as $product)
             <tr>
-                <td>{{ $index + 1 }}</td>
+                <td>{{ $product['id'] }}</td>
                 <td>{{ $product['name'] }}</td>
                 <td>{{ $product['price'] }}</td>
                 <td>{{ $product['category'] ?? 'N/A' }}</td>

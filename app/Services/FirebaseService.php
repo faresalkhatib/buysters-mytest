@@ -24,6 +24,4 @@ class FirebaseService
     {
         return $this->firebase->createMessaging();
     }
-
-    // Add more services like Firestore, Realtime DB, etc.
 }
