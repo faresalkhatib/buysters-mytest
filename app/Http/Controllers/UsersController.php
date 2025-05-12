@@ -7,9 +7,6 @@ use Illuminate\Support\Facades\Log;
 
 class UsersController extends Controller
 {
-
-    protected $auth;
-    protected $database;
     protected $firestore;
 
     public function __construct()
@@ -27,11 +24,28 @@ class UsersController extends Controller
             foreach ($documents as $document) {
                 if ($document->exists()) {
                     $data = $document->data();
+
+                    $location = $data['location'] ?? null;
+                    $latitude = null;
+                    $longitude = null;
+
+                    if (is_object($location) && method_exists($location, 'latitude') && method_exists($location, 'longitude')) {
+                        $latitude = $location->latitude();
+                        $longitude = $location->longitude();
+                    } elseif (is_array($location) && isset($location['latitude']) && isset($location['longitude'])) {
+                        $latitude = $location['latitude'];
+                        $longitude = $location['longitude'];
+                    }
+
                     $users[] = [
                         'username' => $data['username'] ?? null,
                         'email' => $data['email'] ?? null,
                         'image_url' => $data['image_url'] ?? null,
                         'role' => $data['role'] ?? null,
+                        'phone_number' => $data['phone_number'] ?? null,
+                        'stripePaymentMethodId' => $data['stripePaymentMethodId'] ?? null,
+                        'latitude' => $latitude,
+                        'longitude' => $longitude,
                     ];
                 }
             }
@@ -44,6 +58,5 @@ class UsersController extends Controller
                 'message' => 'Failed to load users from Firestore.',
             ], 500);
         }
-
     }
 }
