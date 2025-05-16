@@ -1,5 +1,8 @@
 <x-layout>
     <h1>Categories</h1>
+    <div class="text-right mb-5">
+        <a href="/categories/create" class="bg-[#11235A] text-[#fff] p-[15px] rounded-xl">Create New Category</a>
+    </div>
     <table id="mytable" border="1">
         <thead>
             <th>Category ID</th>

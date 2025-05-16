@@ -29,6 +29,10 @@ class FirbaseServiceProvider extends ServiceProvider
         $this->app->singleton('firebase.firestore', function () use ($factory) {
             return $factory->createFirestore()->database();
         });
+
+        $this->app->singleton('firebase.storage', function () use ($factory) {
+            return $factory->createStorage();
+        });
     }
 
     /**

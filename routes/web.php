@@ -15,7 +15,10 @@ Route::middleware(['firebase.auth', 'admin'])->group(function () {
     Route::get('orders', [OrdersController::class,'index'])->name('order');
     Route::get('products' , [ProductsController::class , 'index'])->name('product');
     Route::get('users', [UsersController::class, 'index'])->name('user');
+
     Route::get('categories' , [CategoriesController::class , 'index'])->name('category');
+    Route::get('categories/create' , [CategoriesController::class , 'create'])->name('category.create');
+    Route::post('categories' , [CategoriesController::class , 'store'])->name('category.store');
 
     Route::get('reports', function () {
         return view('reports');
