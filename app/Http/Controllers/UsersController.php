@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 
 class UsersController extends Controller
 {
@@ -17,38 +18,57 @@ class UsersController extends Controller
     public function index()
     {
         try {
-            $usersCollection = $this->firestore->collection('users');
-            $documents = $usersCollection->documents();
+            $startTime = microtime(true);
 
-            $users = [];
-            foreach ($documents as $document) {
-                if ($document->exists()) {
-                    $data = $document->data();
+            $users = Cache::remember('users_list', now()->addMinutes(5), function () {
+                $usersCollection = $this->firestore->collection('users')
+                    ->select([
+                        'username',
+                        'email',
+                        'image_url',
+                        'role',
+                        'phone_number',
+                        'stripePaymentMethodId',
+                        'location'
+                    ]);
 
-                    $location = $data['location'] ?? null;
-                    $latitude = null;
-                    $longitude = null;
+                $documents = $usersCollection->documents();
+                $users = [];
 
-                    if (is_object($location) && method_exists($location, 'latitude') && method_exists($location, 'longitude')) {
-                        $latitude = $location->latitude();
-                        $longitude = $location->longitude();
-                    } elseif (is_array($location) && isset($location['latitude']) && isset($location['longitude'])) {
-                        $latitude = $location['latitude'];
-                        $longitude = $location['longitude'];
+                foreach ($documents as $document) {
+                    if ($document->exists()) {
+                        $data = $document->data();
+
+                        $location = $data['location'] ?? null;
+                        $latitude = null;
+                        $longitude = null;
+
+                        if (is_object($location) && method_exists($location, 'latitude') && method_exists($location, 'longitude')) {
+                            $latitude = $location->latitude();
+                            $longitude = $location->longitude();
+                        } elseif (is_array($location)) {
+                            $latitude = $location['latitude'] ?? null;
+                            $longitude = $location['longitude'] ?? null;
+                        }
+
+                        $users[] = [
+                            'username' => $data['username'] ?? null,
+                            'email' => $data['email'] ?? null,
+                            'image_url' => $data['image_url'] ?? null,
+                            'role' => $data['role'] ?? null,
+                            'phone_number' => $data['phone_number'] ?? null,
+                            'stripePaymentMethodId' => $data['stripePaymentMethodId'] ?? null,
+                            'latitude' => $latitude,
+                            'longitude' => $longitude,
+                        ];
                     }
-
-                    $users[] = [
-                        'username' => $data['username'] ?? null,
-                        'email' => $data['email'] ?? null,
-                        'image_url' => $data['image_url'] ?? null,
-                        'role' => $data['role'] ?? null,
-                        'phone_number' => $data['phone_number'] ?? null,
-                        'stripePaymentMethodId' => $data['stripePaymentMethodId'] ?? null,
-                        'latitude' => $latitude,
-                        'longitude' => $longitude,
-                    ];
                 }
-            }
+
+                return $users;
+            });
+
+            $endTime = microtime(true);
+            Log::info('Firestore user load time: ' . round(($endTime - $startTime) * 1000, 2) . 'ms');
 
             return view('users', compact('users'));
         } catch (\Throwable $e) {

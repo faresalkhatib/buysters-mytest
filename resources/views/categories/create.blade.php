@@ -32,4 +32,7 @@
             <button type="submit" class="bg-[#11235A] text-[#fff] p-[15px] rounded-xl">Create Category</button>
         </div>
     </form>
+    @error('error')
+        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+    @enderror
 </x-layout>

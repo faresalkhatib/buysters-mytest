@@ -19,6 +19,9 @@ Route::middleware(['firebase.auth', 'admin'])->group(function () {
     Route::get('categories' , [CategoriesController::class , 'index'])->name('category');
     Route::get('categories/create' , [CategoriesController::class , 'create'])->name('category.create');
     Route::post('categories' , [CategoriesController::class , 'store'])->name('category.store');
+    Route::get('categories/{id}/edit' , [CategoriesController::class , 'edit'])->name('category.edit');
+    Route::put('categories/{id}' , [CategoriesController::class , 'update'])->name('category.update');
+    Route::delete('categories/{id}' , [CategoriesController::class , 'destroy'])->name('category.destroy');
 
     Route::get('reports', function () {
         return view('reports');
