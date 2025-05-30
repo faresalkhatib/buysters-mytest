@@ -5,7 +5,7 @@
     <div class="container">
   <h2>Buysters Dashboard</h2>
 
-  <!-- KPI Cards -->
+
 <div class="cards">
     <div class="card">
         <h3>Total Orders</h3>
@@ -22,10 +22,10 @@
 
 </div>
 
-  <!-- Sales Chart -->
+  
   <canvas id="salesChart" height="100"></canvas>
 
-  <!-- Recent Orders Table -->
+
   <div class="table-container">
     <h3>Recent Orders</h3>
     <table id="mytable" >
@@ -59,7 +59,7 @@
   </div>
 </div>
 
-<!-- Chart.js -->
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
   const ctx = document.getElementById('salesChart').getContext('2d');

@@ -17,7 +17,7 @@ class DashboardController extends Controller
     public function index()
     {
         try {
-            // Fetch latest 10 orders from Firestore
+           
             $ordersCollection = $this->firestore->collection('orders');
             $documents = $ordersCollection->orderBy('timestamp', 'DESC')->limit(10)->documents();
 
@@ -47,7 +47,6 @@ class DashboardController extends Controller
                 }
             }
 
-            // Fetch stats from Firestore
             $usersCollection = $this->firestore->collection('users');
             $productsCollection = $this->firestore->collection('products');
 
