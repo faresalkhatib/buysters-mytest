@@ -8,7 +8,7 @@ use Kreait\Firebase\Auth;
 use Kreait\Firebase\Database;
 use Kreait\Firebase\Firestore;
 
-class FirbaseServiceProvider extends ServiceProvider
+class FirebaseServiceProvider extends ServiceProvider
 {
     /**
      * Register services.

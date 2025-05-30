@@ -2,5 +2,5 @@
 
 return [
     App\Providers\AppServiceProvider::class,
-    App\Providers\FirbaseServiceProvider::class,
+    App\Providers\FirebaseServiceProvider::class,
 ];

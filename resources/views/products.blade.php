@@ -14,9 +14,21 @@
             <tr>
                 <td>{{ $product['id'] }}</td>
                 <td>{{ $product['name'] }}</td>
-                <td>{{ $product['price'] }}</td>
-                <td>{{ $product['category'] ?? 'N/A' }}</td>
-                <td>{{ $product['status'] }}</td>
+                <td>${{ number_format($product['price'], 2) }}</td>
+                <td>
+                    @if($product['category_id'])
+                        <a href="{{ route('category.show', $product['category_id']) }}" class="text-decoration-none">
+                            {{ $product['category'] }}
+                        </a>
+                    @else
+                        {{ $product['category'] }}
+                    @endif
+                </td>
+                <td>
+                    <span class="badge bg-{{ $product['status'] === 'active' ? 'success' : ($product['status'] === 'pending' ? 'warning' : 'secondary') }}">
+                        {{ ucfirst($product['status']) }}
+                    </span>
+                </td>
                 <td>{{ $product['seller'] }}</td>
             </tr>
         @endforeach
