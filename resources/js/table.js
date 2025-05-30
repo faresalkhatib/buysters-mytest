@@ -5,6 +5,9 @@ DataTable.Responsive = Responsive;
 import 'datatables.net-dt/css/dataTables.dataTables.min.css';
 
 let table = new DataTable('#mytable', {
-    responsive: true
+    responsive: true,
+    columnDefs: [
+        { targets: 0, className: 'highlight-column' }
+    ]
 });
 

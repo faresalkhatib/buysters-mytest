@@ -1,43 +1,56 @@
 <x-auth.layout>
-    <div class="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8">
-        <div class="sm:mx-auto sm:w-full sm:max-w-sm">
-            <img class="mx-auto h-10 w-auto" src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=600" alt="Your Company">
-            <h2 class="mt-10 text-center text-2xl/9 font-bold tracking-tight text-gray-900">Sign in to your account</h2>
-        </div>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
 
-        <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
-            <form class="space-y-6" action="{{ route('login.store') }}" method="POST" id="login-form">
-                @csrf
-                <input type="hidden" name="idToken" id="idToken">
-                <div>
-                    <label for="email" class="block text-sm/6 font-medium text-gray-900">Email address</label>
-                    <div class="mt-2">
-                        <input type="email" name="email" id="email" autocomplete="email" required class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6">
-                    </div>
-                </div>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #eef1f5;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
 
-                <div>
-                    <div class="flex items-center justify-between">
-                        <label for="password" class="block text-sm/6 font-medium text-gray-900">Password</label>
-                        <div class="text-sm">
-                            <a href="#" class="font-semibold text-indigo-600 hover:text-indigo-500">Forgot password?</a>
-                        </div>
-                    </div>
-                    <div class="mt-2">
-                        <input type="password" name="password" id="password" autocomplete="current-password" required class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6">
-                    </div>
-                </div>
+  </style>
 
-                @if ($errors->has('auth'))
-                    <div class="alert alert-danger">{{ $errors->first('auth') }}</div>
-                @endif
-
-                <div id="error-message" class="alert alert-danger d-none"></div>
-
-                <div>
-                    <button type="submit" class="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm/6 font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Sign in</button>
-                </div>
-            </form>
-        </div>
+  <div class="auth-wrapper">
+    <div class="auth-left">
+      <img src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=600" alt="Buysters Logo" style="width: 60px; margin-bottom: 20px;">
+      <h1>Buysters Admin</h1>
+      <p>Secure access to your store dashboard to manage orders, products, and customers.</p>
     </div>
+
+    <div class="auth-right">
+      <h2>Admin Panel Login</h2>
+      <form action="{{ route('login.store') }}" method="POST" id="login-form">
+        @csrf
+        <input type="hidden" name="idToken" id="idToken">
+
+        <div class="form-group">
+          <label for="email">Email Address</label>
+          <input type="email" name="email" id="email" required>
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" name="password" id="password" required>
+        </div>
+
+        <div class="forgot-password">
+          <a href="#">Forgot password?</a>
+        </div>
+
+        @if ($errors->has('auth'))
+          <div class="alert">{{ $errors->first('auth') }}</div>
+        @endif
+
+   
+
+        <button type="submit" class="btn">Sign In</button>
+      </form>
+    </div>
+  </div>
 </x-auth.layout>
