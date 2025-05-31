@@ -7,7 +7,6 @@ use App\Http\Controllers\UsersController;
 use App\Http\Controllers\OrdersController;
 use App\Http\Controllers\ProductsController;
 use App\Http\Controllers\CategoriesController;
-use App\Http\Controllers\DashboardController;
 
 Route::middleware(['firebase.auth', 'admin'])->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
