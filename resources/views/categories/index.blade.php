@@ -1,5 +1,6 @@
 <x-layout>
-    <h1>Categories</h1>
+    <div class="container">
+        <h1>Categories</h1>
     <div class="text-right mb-5">
         <a href="/categories/create" class="bg-[#11235A] text-[#fff] p-[15px] rounded-xl">Create New Category</a>
     </div>
@@ -30,4 +31,5 @@
             @endforeach
         </tbody>
     </table>
+    </div>
 </x-layout>

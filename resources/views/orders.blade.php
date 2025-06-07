@@ -1,4 +1,5 @@
 <x-layout>
+    <div class="container">
     <h1>Orders</h1>
     <table id="mytable" border="1">
         <thead>
@@ -24,4 +25,5 @@
             @endforeach
         </tbody>
     </table>
+</div>
 </x-layout>

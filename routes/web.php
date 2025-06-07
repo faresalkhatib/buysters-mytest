@@ -28,6 +28,10 @@ Route::middleware(['firebase.auth', 'admin'])->group(function () {
     });
 });
 
+Route::middleware(['web', 'firebase.auth'])->group(function () {
+    Route::post('/users/{userId}/toggle-block', [UsersController::class, 'toggleBlock'])->name('users.toggle-block');
+});
+
 Route::get('/login', [AuthController::class, 'index'])
     ->middleware('firebase.guest')
     ->name('login');

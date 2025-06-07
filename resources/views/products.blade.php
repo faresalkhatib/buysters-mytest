@@ -1,4 +1,5 @@
 <x-layout>
+    <div class="container">
     <h1>welcome to products</h1>
     <table id="mytable" border="1">
         <thead>
@@ -17,7 +18,7 @@
                 <td>${{ number_format($product['price'], 2) }}</td>
                 <td>
                     @if($product['category_id'])
-                        <a href="{{ route('category.show', $product['category_id']) }}" class="text-decoration-none">
+                        <a href="{{ route('category.show', $product['category_id']) }}" class="font-medium text-blue-600 dark:text-blue-500 hover:underlinee">
                             {{ $product['category'] }}
                         </a>
                     @else
@@ -34,4 +35,5 @@
         @endforeach
         </tbody>
     </table>
+</div>
 </x-layout>

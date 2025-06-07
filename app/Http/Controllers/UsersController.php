@@ -18,8 +18,6 @@ class UsersController extends Controller
     public function index()
     {
         try {
-            $startTime = microtime(true);
-
             $users = Cache::remember('users_list', now()->addMinutes(5), function () {
                 $usersCollection = $this->firestore->collection('users')
                     ->select([
@@ -29,7 +27,8 @@ class UsersController extends Controller
                         'role',
                         'phone_number',
                         'stripePaymentMethodId',
-                        'location'
+                        'location',
+                        'status'
                     ]);
 
                 $documents = $usersCollection->documents();
@@ -52,6 +51,7 @@ class UsersController extends Controller
                         }
 
                         $users[] = [
+                            'id' => $document->id(),
                             'username' => $data['username'] ?? null,
                             'email' => $data['email'] ?? null,
                             'image_url' => $data['image_url'] ?? null,
@@ -60,15 +60,13 @@ class UsersController extends Controller
                             'stripePaymentMethodId' => $data['stripePaymentMethodId'] ?? null,
                             'latitude' => $latitude,
                             'longitude' => $longitude,
+                            'status' => $data['status'] ?? 'active',
                         ];
                     }
                 }
 
                 return $users;
             });
-
-            $endTime = microtime(true);
-            Log::info('Firestore user load time: ' . round(($endTime - $startTime) * 1000, 2) . 'ms');
 
             return view('users', compact('users'));
         } catch (\Throwable $e) {
@@ -77,6 +75,66 @@ class UsersController extends Controller
             return response()->view('errors.firebase', [
                 'message' => 'Failed to load users from Firestore.',
             ], 500);
+        }
+    }
+
+    public function toggleBlock($userId)
+    {
+        try {
+            Log::info('Attempting to toggle block status', [
+                'user_id' => $userId,
+                'session_user' => session('user')
+            ]);
+
+            $userRef = $this->firestore->collection('users')->document($userId);
+            $userDoc = $userRef->snapshot();
+
+            if (!$userDoc->exists()) {
+                Log::error('User not found', ['user_id' => $userId]);
+                return redirect()->back()->with('error', 'User not found');
+            }
+
+            $currentData = $userDoc->data();
+            Log::info('Current user data', ['data' => $currentData]);
+
+            if (($currentData['role'] ?? '') === 'admin') {
+                Log::warning('Attempt to block admin user', ['user_id' => $userId]);
+                return redirect()->back()->with('error', 'Cannot block admin users');
+            }
+
+            $currentUserId = session('user.uid');
+            if (!$currentUserId) {
+                Log::error('No user ID in session');
+                return redirect()->back()->with('error', 'Session error: Please log in again');
+            }
+
+            if ($currentUserId === $userId) {
+                Log::warning('Attempt to block self', ['user_id' => $userId]);
+                return redirect()->back()->with('error', 'Cannot block yourself');
+            }
+
+            $newStatus = ($currentData['status'] ?? 'active') === 'active' ? 'blocked' : 'active';
+            Log::info('Updating user status', [
+                'user_id' => $userId,
+                'old_status' => $currentData['status'] ?? 'active',
+                'new_status' => $newStatus
+            ]);
+
+            $userRef->set([
+                'status' => $newStatus
+            ], ['merge' => true]);
+
+            Cache::forget('users_list');
+
+            $status = $newStatus === 'blocked' ? 'blocked' : 'unblocked';
+            return redirect()->back()->with('success', "User successfully {$status}");
+        } catch (\Throwable $e) {
+            Log::error('Firestore Error in toggleBlock', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'user_id' => $userId
+            ]);
+            return redirect()->back()->with('error', 'Failed to update user status: ' . $e->getMessage());
         }
     }
 }
