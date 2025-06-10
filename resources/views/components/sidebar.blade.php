@@ -4,6 +4,7 @@
     <a href="/users">Users</a>
     <a href="/categories">Categories</a>
     <a href="/products">Products</a>
+    <a href="/captains">Captains</a>
     <a href="/orders">Orders</a>
     <a href="/reports">Reports</a>
     <a href="#">Settings</a>

@@ -1,6 +1,6 @@
 <x-layout>
     <div class="container">
-        <h1>welcome to users</h1>
+        <h1 class="text-3xl font-bold mb-6">Users Management</h1>
         @if(session('success'))
             <div class="alert alert-success">
                 {{ session('success') }}
@@ -38,7 +38,7 @@
                             @if($user['role'] !== 'admin' && $user['id'] !== session('user_id'))
                                 <form action="{{ route('users.toggle-block', $user['id']) }}" method="POST" style="display: inline;">
                                     @csrf
-                                    <button type="submit" class="btn btn-{{ $user['status'] === 'active' ? 'danger' : 'success' }} btn-sm">
+                                    <button type="submit" class="action-btn {{ $user['status'] === 'active' ? 'block-btn bg-[#dc2626] hover:bg-[#b91c1c]' : 'unblock-btn bg-[#059669] hover:bg-[#047857]' }} text-white px-4 py-2 rounded-xl transition-colors cursor-pointer">
                                         {{ $user['status'] === 'active' ? 'Block' : 'Unblock' }}
                                     </button>
                                 </form>

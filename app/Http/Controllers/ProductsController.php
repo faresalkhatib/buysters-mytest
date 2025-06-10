@@ -54,7 +54,7 @@ class ProductsController extends Controller
             $products = Cache::remember('products_list', now()->addMinutes(5), function () use ($categories) {
                 try {
                     $productsSnapshot = $this->firestore->collection('products')
-                        ->select(['name', 'price', 'categoryId', 'status', 'seller_ifos'])
+                        ->select(['name', 'price', 'categoryId', 'status', 'seller_ifos', 'deleted_at'])
                         ->documents();
 
                     $products = [];
@@ -63,6 +63,11 @@ class ProductsController extends Controller
                         try {
                             if ($doc->exists()) {
                                 $data = $doc->data();
+
+                                // Skip soft-deleted products
+                                if (isset($data['deleted_at'])) {
+                                    continue;
+                                }
 
                                 Log::debug('Processing product document: ' . $doc->id(), [
                                     'data_type' => gettype($data),
@@ -119,6 +124,60 @@ class ProductsController extends Controller
             return response()->view('errors.firebase', [
                 'message' => 'Failed to load products from Firestore.',
             ], 500);
+        }
+    }
+
+    public function destroy($id)
+    {
+        try {
+            $productRef = $this->firestore->collection('products')->document($id);
+            $productDoc = $productRef->snapshot();
+
+            if (!$productDoc->exists()) {
+                return redirect()->back()->with('error', 'Product not found');
+            }
+
+            // Soft delete by adding deleted_at timestamp
+            $productRef->set([
+                'deleted_at' => new \Google\Cloud\Core\Timestamp(new \DateTime())
+            ], ['merge' => true]);
+
+            Cache::forget('products_list');
+
+            return redirect()->back()->with('success', 'Product deleted successfully');
+        } catch (\Throwable $e) {
+            Log::error('Firestore Error in product delete: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'product_id' => $id
+            ]);
+            return redirect()->back()->with('error', 'Failed to delete product: ' . $e->getMessage());
+        }
+    }
+
+    public function restore($id)
+    {
+        try {
+            $productRef = $this->firestore->collection('products')->document($id);
+            $productDoc = $productRef->snapshot();
+
+            if (!$productDoc->exists()) {
+                return redirect()->back()->with('error', 'Product not found');
+            }
+
+            // Remove deleted_at field to restore the product
+            $productRef->update([
+                ['path' => 'deleted_at', 'value' => null]
+            ]);
+
+            Cache::forget('products_list');
+
+            return redirect()->back()->with('success', 'Product restored successfully');
+        } catch (\Throwable $e) {
+            Log::error('Firestore Error in product restore: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'product_id' => $id
+            ]);
+            return redirect()->back()->with('error', 'Failed to restore product: ' . $e->getMessage());
         }
     }
 }

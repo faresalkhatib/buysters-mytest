@@ -11,7 +11,9 @@ class AuthController extends Controller
 {
     protected $auth;
     protected $firestore;
-    public function __construct(){
+
+    public function __construct()
+    {
         $this->auth = app('firebase.auth');
         $this->firestore = app('firebase.firestore');
     }

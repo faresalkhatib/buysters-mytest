@@ -1,6 +1,6 @@
 <x-layout>
     <div class="container">
-    <h1>Orders</h1>
+        <h1 class="text-3xl font-bold mb-6">Orders Management</h1>
     <table id="mytable" border="1">
         <thead>
             <th>Order ID</th>
