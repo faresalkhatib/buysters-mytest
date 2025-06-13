@@ -1,3 +1,3 @@
 <div class="logo">
-        <img src="https://via.placeholder.com/100x40?text=Logo" alt="Logo" />
+        <img src="{{ Vite::asset('resources/images/logo.png') }}" alt="Logo" />
       </div>

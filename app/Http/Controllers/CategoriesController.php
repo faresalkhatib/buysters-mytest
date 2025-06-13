@@ -24,33 +24,75 @@ class CategoriesController extends Controller
     {
         try {
             $startTime = microtime(true);
+            $memoryStart = memory_get_usage();
 
             $categories = Cache::remember('categories_index_list', now()->addMinutes(1), function () {
-                $categoriesSnapshot = $this->firestore->collection('categories')
-                    ->documents();
+                try {
+                    $categoriesSnapshot = $this->firestore->collection('categories')
+                        ->documents();
 
-                $categories = [];
-                foreach ($categoriesSnapshot as $document) {
-                    if ($document->exists()) {
-                        $data = $document->data();
-                        if (!isset($data['deleted_at'])) {
+                    $categories = [];
+
+                    foreach ($categoriesSnapshot as $document) {
+                        try {
+                            if (!$document->exists()) {
+                                continue;
+                            }
+
+                            $data = $document->data();
+
+                            Log::debug('Processing document: ' . $document->id(), [
+                                'data_type' => gettype($data),
+                                'data_size' => strlen(json_encode($data))
+                            ]);
+
+                            if (!is_array($data)) {
+                                Log::warning('Invalid category data structure for document: ' . $document->id());
+                                continue;
+                            }
+
+                            if (isset($data['deleted_at'])) {
+                                continue;
+                            }
+
                             $categories[] = [
                                 'id' => $document->id(),
-                                'name' => $data['name'],
+                                'name' => $data['name'] ?? '',
                                 'image_url' => $data['imageUrl'] ?? ''
                             ];
+                        } catch (\Throwable $e) {
+                            Log::error('Error processing category document: ' . $e->getMessage(), [
+                                'document_id' => $document->id(),
+                                'trace' => $e->getTraceAsString()
+                            ]);
+                            continue;
                         }
                     }
+
+                    return $categories;
+                } catch (\Throwable $e) {
+                    Log::error('Error in categories cache callback: ' . $e->getMessage(), [
+                        'trace' => $e->getTraceAsString()
+                    ]);
+                    throw $e;
                 }
-                return $categories;
             });
 
             $endTime = microtime(true);
-            Log::info('Firestore category load time: ' . round(($endTime - $startTime) * 1000, 2) . 'ms');
+            $memoryEnd = memory_get_usage();
+
+            Log::info('Firestore category load metrics:', [
+                'time_ms' => round(($endTime - $startTime) * 1000, 2),
+                'memory_usage_mb' => round(($memoryEnd - $memoryStart) / 1024 / 1024, 2),
+                'categories_count' => count($categories)
+            ]);
 
             return view('categories.index', compact('categories'));
         } catch (\Throwable $e) {
-            Log::error('Firestore Error: ' . $e->getMessage());
+            Log::error('Firestore Error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'memory_usage' => memory_get_usage()
+            ]);
             return response()->view('errors.firebase', [
                 'message' => 'Failed to load categories from Firestore.',
             ], 500);
@@ -210,18 +252,114 @@ class CategoriesController extends Controller
     public function show($id)
     {
         try {
-            $categoryDocument = $this->firestore->collection('categories')->document($id);
-            $category = $categoryDocument->snapshot()->data();
+            $startTime = microtime(true);
+            $memoryStart = memory_get_usage();
 
-            if (!$category) {
-                return redirect()->route('category')->with('error', 'Category not found.');
-            }
+            $category = Cache::remember('category_' . $id, now()->addMinutes(5), function () use ($id) {
+                try {
+                    $categoryDoc = $this->firestore->collection('categories')->document($id);
+                    $categoryData = $categoryDoc->snapshot()->data();
 
-            return view('categories.show', compact('category'));
+                    if (!$categoryData) {
+                        throw new \Exception('Category not found');
+                    }
+
+                    return [
+                        'id' => $id,
+                        'name' => $categoryData['name'] ?? '',
+                        'image_url' => $categoryData['imageUrl'] ?? ''
+                    ];
+                } catch (\Throwable $e) {
+                    Log::error('Error fetching category: ' . $e->getMessage(), [
+                        'category_id' => $id,
+                        'trace' => $e->getTraceAsString()
+                    ]);
+                    throw $e;
+                }
+            });
+
+            $products = Cache::remember('products_by_category_' . $id, now()->addMinutes(5), function () use ($id) {
+                try {
+                    $productsSnapshot = $this->firestore->collection('products')
+                        ->where('categoryId', '=', $id)
+                        ->select(['name', 'price', 'status', 'seller_ifos'])
+                        ->documents();
+
+                    $products = [];
+                    $totalPrice = 0;
+                    $statusCounts = [];
+
+                    foreach ($productsSnapshot as $doc) {
+                        try {
+                            if ($doc->exists()) {
+                                $data = $doc->data();
+
+                                if (!is_array($data)) {
+                                    Log::warning('Invalid product data structure for document: ' . $doc->id());
+                                    continue;
+                                }
+
+                                $price = $data['price'] ?? 0;
+                                $status = $data['status'] ?? 'unknown';
+
+                                $totalPrice += $price;
+                                $statusCounts[$status] = ($statusCounts[$status] ?? 0) + 1;
+
+                                $products[] = [
+                                    'id' => $doc->id(),
+                                    'name' => $data['name'] ?? '',
+                                    'price' => $price,
+                                    'status' => $status,
+                                    'seller' => $data['seller_ifos']['seller_email'] ?? '',
+                                ];
+                            }
+                        } catch (\Throwable $e) {
+                            Log::error('Error processing product document: ' . $e->getMessage(), [
+                                'document_id' => $doc->id(),
+                                'trace' => $e->getTraceAsString()
+                            ]);
+                            continue;
+                        }
+                    }
+
+                    return [
+                        'products' => $products,
+                        'statistics' => [
+                            'total_products' => count($products),
+                            'average_price' => count($products) > 0 ? round($totalPrice / count($products), 2) : 0,
+                            'total_value' => $totalPrice,
+                            'status_distribution' => $statusCounts
+                        ]
+                    ];
+                } catch (\Throwable $e) {
+                    Log::error('Error in products cache callback: ' . $e->getMessage(), [
+                        'trace' => $e->getTraceAsString()
+                    ]);
+                    throw $e;
+                }
+            });
+
+            $endTime = microtime(true);
+            $memoryEnd = memory_get_usage();
+
+            Log::info('Firestore category products load metrics:', [
+                'time_ms' => round(($endTime - $startTime) * 1000, 2),
+                'memory_usage_mb' => round(($memoryEnd - $memoryStart) / 1024 / 1024, 2),
+                'products_count' => count($products['products'])
+            ]);
+
+            return view('categories.show', [
+                'category' => $category,
+                'products' => $products['products'],
+                'statistics' => $products['statistics']
+            ]);
         } catch (\Throwable $e) {
-            Log::error('Firestore Error: ' . $e->getMessage());
+            Log::error('Firestore Error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'memory_usage' => memory_get_usage()
+            ]);
             return response()->view('errors.firebase', [
-                'message' => 'Failed to load category from Firestore.',
+                'message' => 'Failed to load category products from Firestore.',
             ], 500);
         }
     }

@@ -1,7 +1,7 @@
 <x-layout>
 
 
-  
+
     <div class="container">
   <h2>Buysters Dashboard</h2>
 
@@ -22,7 +22,7 @@
 
 </div>
 
-  
+  <!-- Sales Chart -->
   <canvas id="salesChart" height="100"></canvas>
 
 
@@ -32,7 +32,7 @@
       <thead>
         <tr>
           <th>#</th>
-          <th>Status</th>  
+          <th>Status</th>
           <th>Customer id</th>
           <th>Product id</th>
           <th>Total price</th>
