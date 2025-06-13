@@ -3,7 +3,7 @@
 
 
     <div class="container">
-  <h2>Buysters Dashboard</h2>
+        <h2 class="text-3xl font-bold mb-6">Buysters Dashboard</h2>
 
 
 <div class="cards">
@@ -26,8 +26,8 @@
   <canvas id="salesChart" height="100"></canvas>
 
 
-  <div class="table-container">
-    <h3>Recent Orders</h3>
+  <div class="table-container mt-10">
+    <h3 class="text-3xl font-bold mb-6">Recent Orders</h3>
     <table id="mytable" >
       <thead>
         <tr>

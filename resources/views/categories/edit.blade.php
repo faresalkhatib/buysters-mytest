@@ -1,4 +1,5 @@
 <x-layout>
+    <div class="container">
     <h1>Edit Category</h1>
 
     <form action="{{ route('category.update', $category['id']) }}" method="POST" enctype="multipart/form-data" class="mt-5">
@@ -37,4 +38,5 @@
             <button type="submit" class="bg-[#11235A] text-[#fff] p-[15px] rounded-xl">Update Category</button>
         </div>
     </form>
+</div>
 </x-layout>

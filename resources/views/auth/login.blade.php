@@ -18,7 +18,7 @@
 
     <div class="auth-wrapper">
       <div class="auth-left">
-        <img src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=600" alt="Buysters Logo" style="width: 60px; margin-bottom: 20px;">
+        <img src="{{ Vite::asset('resources/images/logo.png') }}" alt="Buysters Logo" style="width: 60px; margin-bottom: 20px;">
         <h1>Buysters Admin</h1>
         <p>Secure access to your store dashboard to manage orders, products, and customers.</p>
       </div>

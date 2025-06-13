@@ -1,4 +1,5 @@
 <x-layout>
+    <div class="container">
     <h1>Create New Category</h1>
 
     <form action="{{ route('category.store') }}" method="POST" enctype="multipart/form-data" class="mt-5">
@@ -35,4 +36,5 @@
     @error('error')
         <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
     @enderror
+</div>
 </x-layout>
