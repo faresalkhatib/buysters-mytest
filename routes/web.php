@@ -7,12 +7,16 @@ use App\Http\Controllers\UsersController;
 use App\Http\Controllers\OrdersController;
 use App\Http\Controllers\ProductsController;
 use App\Http\Controllers\CategoriesController;
+use App\Http\Controllers\CaptainController;
+use App\Http\Controllers\TransactionsController;
 
 Route::middleware(['firebase.auth', 'admin'])->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::get('orders', [OrdersController::class,'index'])->name('order');
-
+    
+    Route::get('transactions', [TransactionsController::class, 'index'])->name('transactions');
+    Route::delete('transactions/{id}', [TransactionsController::class, 'destroy'])->name('transactions.destroy');
     // Product routes
     Route::get('products', [ProductsController::class, 'index'])->name('product');
     Route::delete('products/{id}', [ProductsController::class, 'destroy'])->name('product.destroy');
@@ -48,3 +52,8 @@ Route::post('/login', [AuthController::class, 'login'])->name('login.store');
 Route::get('/logout', [AuthController::class, 'logout'])
     ->middleware('firebase.auth')
     ->name('logout');
+
+Route::get('/captains', [CaptainController::class, 'index'])->name('captains.index');
+Route::get('/captains/{id}', [CaptainController::class, 'show'])->name('captains.show');
+Route::patch('/captains/{id}/toggle-status', [CaptainController::class, 'toggleStatus'])->name('captains.toggleStatus');
+Route::post('/captains', [CaptainController::class, 'store'])->name('captains.store'); // For the add form

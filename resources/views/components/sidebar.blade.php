@@ -7,5 +7,6 @@
     <a href="/captains">Captains</a>
     <a href="/orders">Orders</a>
     <a href="/reports">Reports</a>
+    <a href="/transactions">Transactions</a>
     <a href="#">Settings</a>
   </div>
