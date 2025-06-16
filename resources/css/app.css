@@ -44,7 +44,7 @@
       box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
 
-   
+
     @media (max-width: 768px) {
       .cards {
         flex-direction: column;
@@ -271,7 +271,7 @@
   }
 
   .container {
-    max-width: 1200px;
+    max-width: 100%;
     margin: auto;
   }
 
