@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 use Google\Cloud\Firestore\FirestoreClient;
-use Illuminate\Http\Request;                                      
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Cache;
@@ -27,22 +27,45 @@ class CaptainController extends Controller
      */
     public function index()
     {
-        $captains = [];
-        $documents = $this->firestore
-            ->collection('delivery')
-            ->documents();
+        try {
+            $captains = Cache::remember('captains_list', now()->addMinutes(5), function () {
+                $captains = [];
+                $documents = $this->firestore
+                    ->collection('delivery')
+                    ->documents();
 
-        foreach ($documents as $document) {
-            if ($document->exists()) {
-                $captain = $document->data();
-                $captain['id'] = $document->id();
-                $captains[] = (object) $captain;
-            }
+                foreach ($documents as $document) {
+                    if ($document->exists()) {
+                        $captain = $document->data();
+                        $captain['id'] = $document->id();
+                        $captains[] = (object) $captain;
+                    }
+                }
+
+                return collect($captains);
+            });
+
+            return view('captains.index', compact('captains'));
+        } catch (\Throwable $e) {
+            Log::error('Firestore Error: ' . $e->getMessage());
+            return response()->view('errors.firebase', [
+                'message' => 'Failed to load captains from Firestore.',
+            ], 500);
         }
+    }
 
-        $captains = collect($captains);
-
-        return view('captains', compact('captains'));
+    /**
+     * Show the form for creating a new captain.
+     */
+    public function create()
+    {
+        try {
+            return view('captains.create');
+        } catch (\Throwable $e) {
+            Log::error('Error loading create form: ' . $e->getMessage());
+            return redirect()->route('captains.index')
+                ->with('error', 'Failed to load create form: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -50,20 +73,31 @@ class CaptainController extends Controller
      */
     public function show($id)
     {
-        $docRef = $this->firestore
-            ->collection('delivery')
-            ->document($id);
+        try {
+            $docRef = $this->firestore
+                ->collection('delivery')
+                ->document($id);
 
-        $snapshot = $docRef->snapshot();
+            $snapshot = $docRef->snapshot();
 
-        if (!$snapshot->exists()) {
-            abort(404);
+            if (!$snapshot->exists()) {
+                Log::warning('Captain not found', ['captain_id' => $id]);
+                abort(404);
+            }
+
+            $captain = (object) $snapshot->data();
+            $captain->id = $snapshot->id();
+
+            return view('captains.show', compact('captain'));
+        } catch (\Throwable $e) {
+            Log::error('Firestore Error in show', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'captain_id' => $id
+            ]);
+            return redirect()->route('captains.index')
+                ->with('error', 'Failed to load captain details: ' . $e->getMessage());
         }
-
-        $captain = (object) $snapshot->data();
-        $captain->id = $snapshot->id();
-
-        return view('captains.show', compact('captain'));
     }
 
     /**
@@ -71,28 +105,52 @@ class CaptainController extends Controller
      */
     public function toggleStatus($id)
     {
-        $docRef = $this->firestore
-            ->collection('delivery')
-            ->document($id);
+        try {
+            Log::info('Attempting to toggle captain status', [
+                'captain_id' => $id
+            ]);
 
-        $snapshot = $docRef->snapshot();
+            $docRef = $this->firestore
+                ->collection('delivery')
+                ->document($id);
 
-        if (!$snapshot->exists()) {
-            abort(404);
+            $snapshot = $docRef->snapshot();
+
+            if (!$snapshot->exists()) {
+                Log::error('Captain not found', ['captain_id' => $id]);
+                return redirect()->back()->with('error', 'Captain not found');
+            }
+
+            $currentData = $snapshot->data();
+            $currentStatus = $currentData['status'] ?? 'active';
+            $newStatus = $currentStatus === 'active' ? 'blocked' : 'active';
+
+            Log::info('Updating captain status', [
+                'captain_id' => $id,
+                'old_status' => $currentStatus,
+                'new_status' => $newStatus
+            ]);
+
+            $docRef->set([
+                'status' => $newStatus,
+                'updated_at' => now()->format('Y-m-d H:i:s'),
+            ], ['merge' => true]);
+
+            Cache::forget('captains_list');
+
+            $status = $newStatus === 'blocked' ? 'blocked' : 'unblocked';
+            return redirect()->back()->with('success', "Captain successfully {$status}");
+        } catch (\Throwable $e) {
+            Log::error('Firestore Error in toggleStatus', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'captain_id' => $id
+            ]);
+            return redirect()->back()->with('error', 'Failed to update captain status: ' . $e->getMessage());
         }
-
-        $currentStatus = $snapshot->data()['status'] ?? 'active';
-        $newStatus = $currentStatus === 'active' ? 'blocked' : 'active';
-
-        $docRef->set([
-            'status' => $newStatus,
-            'updated_at' => now()->format('Y-m-d H:i:s'),
-        ], ['merge' => true]);
-
-        return back()->with('success', 'Captain status updated!');
-
     }
-public function store(Request $request)
+
+    public function store(Request $request)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -160,9 +218,18 @@ public function store(Request $request)
                 'deleted_at' => null
             ];
 
-            $this->firestore->collection('delivery')->add($captainData);
+            // Add the new captain to Firestore
+            $newCaptainRef = $this->firestore->collection('delivery')->add($captainData);
 
-            Cache::forget('captains_index_list');
+            // Get the new captain's data with ID
+            $newCaptain = $captainData;
+            $newCaptain['id'] = $newCaptainRef->id();
+
+            // Update the cache
+            $cachedCaptains = Cache::get('captains_list', collect([]));
+            $cachedCaptains->push((object) $newCaptain);
+            Cache::put('captains_list', $cachedCaptains, now()->addMinutes(5));
+
             return redirect()->route('captains.index')->with('success', 'Captain created successfully.');
         } catch (\Throwable $e) {
             Log::error('Firebase Error', [

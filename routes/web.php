@@ -14,7 +14,7 @@ Route::middleware(['firebase.auth', 'admin'])->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::get('orders', [OrdersController::class,'index'])->name('order');
-    
+
     Route::get('transactions', [TransactionsController::class, 'index'])->name('transactions');
     Route::delete('transactions/{id}', [TransactionsController::class, 'destroy'])->name('transactions.destroy');
     // Product routes
@@ -33,8 +33,14 @@ Route::middleware(['firebase.auth', 'admin'])->group(function () {
     Route::delete('categories/{id}', [CategoriesController::class, 'destroy'])->name('category.destroy');
 
     Route::post('/users/{userId}/toggle-block', [UsersController::class, 'toggleBlock'])->name('users.toggle-block');
-    Route::get('captains' , function(){
-        return view('delivery_captains');
+
+    // Captain Routes
+    Route::prefix('captains')->group(function () {
+        Route::get('/', [CaptainController::class, 'index'])->name('captains.index');
+        Route::get('/create', [CaptainController::class, 'create'])->name('captains.create');
+        Route::post('/', [CaptainController::class, 'store'])->name('captains.store');
+        Route::get('/{id}', [CaptainController::class, 'show'])->name('captains.show');
+        Route::patch('/{id}/toggle-status', [CaptainController::class, 'toggleStatus'])->name('captains.toggleStatus');
     });
 
     Route::get('reports', function () {
@@ -52,8 +58,3 @@ Route::post('/login', [AuthController::class, 'login'])->name('login.store');
 Route::get('/logout', [AuthController::class, 'logout'])
     ->middleware('firebase.auth')
     ->name('logout');
-
-Route::get('/captains', [CaptainController::class, 'index'])->name('captains.index');
-Route::get('/captains/{id}', [CaptainController::class, 'show'])->name('captains.show');
-Route::patch('/captains/{id}/toggle-status', [CaptainController::class, 'toggleStatus'])->name('captains.toggleStatus');
-Route::post('/captains', [CaptainController::class, 'store'])->name('captains.store'); // For the add form

@@ -34,7 +34,7 @@ class DashboardController extends Controller
                         'total_amount' => $data['total_amount'] ?? 0,
                         'timestamp' => $data['timestamp'] ?? null,
                     ];
-                    $totalRevenue += $data['total_amount'] ?? 0;
+                    $totalRevenue += $data['product_infos']['total_amount'] ?? 0;
                 }
             }
 
@@ -44,7 +44,7 @@ class DashboardController extends Controller
             $totalOrders = count($orders);
             $totalUsers = $usersCollection->documents()->size();
             $totalProducts = $productsCollection->documents()->size();
-            
+
             // Calculate orders per day instead of daily revenue
             $ordersPerDay = [];
             $orderStatusCounts = [];

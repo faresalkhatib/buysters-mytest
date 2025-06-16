@@ -65,13 +65,12 @@ class UsersController extends Controller
                     }
                 }
 
-                return $users;
+                return collect($users);
             });
 
             return view('users', compact('users'));
         } catch (\Throwable $e) {
             Log::error('Firestore Error: ' . $e->getMessage());
-
             return response()->view('errors.firebase', [
                 'message' => 'Failed to load users from Firestore.',
             ], 500);
@@ -124,7 +123,15 @@ class UsersController extends Controller
                 'status' => $newStatus
             ], ['merge' => true]);
 
-            Cache::forget('users_list');
+            // Update the cache
+            $cachedUsers = Cache::get('users_list', collect([]));
+            $cachedUsers = $cachedUsers->map(function ($user) use ($userId, $newStatus) {
+                if ($user['id'] === $userId) {
+                    $user['status'] = $newStatus;
+                }
+                return $user;
+            });
+            Cache::put('users_list', $cachedUsers, now()->addMinutes(5));
 
             $status = $newStatus === 'blocked' ? 'blocked' : 'unblocked';
             return redirect()->back()->with('success', "User successfully {$status}");
