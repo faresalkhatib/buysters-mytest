@@ -1,6 +1,5 @@
 <?php
 
-
 namespace App\Http\Controllers;
 
 use Illuminate\Support\Facades\Log;
@@ -17,9 +16,9 @@ class DashboardController extends Controller
     public function index()
     {
         try {
-            // Fetch latest 10 orders from Firestore
+            // Fetch orders from Firestore (removed limit to get all orders for accurate metrics)
             $ordersCollection = $this->firestore->collection('orders');
-            $documents = $ordersCollection->orderBy('timestamp', 'DESC')->limit(10)->documents();
+            $documents = $ordersCollection->orderBy('timestamp', 'DESC')->documents();
 
             $orders = [];
             $totalRevenue = 0;
@@ -28,20 +27,12 @@ class DashboardController extends Controller
                     $data = $document->data();
                     $orders[] = [
                         'id' => $document->id(),
-                        'acceptance_date' => $data['acceptance_date'] ?? null,
-                        'buyer_id' => $data['buyer_id'] ?? null,
-                        'delivered_date' => $data['delivered_date'] ?? null,
-                        'delivery_person_id' => $data['delivery_person_id'] ?? null,
-                        'is_received' => $data['is_received'] ?? false,
-                        'payment_status' => $data['payment_status'] ?? null,
-                        'pick_up_date' => $data['pick_up_date'] ?? null,
-                        'product_infos' => $data['product_infos'] ?? [],
-                        'seller_id' => $data['seller_id'] ?? null,
-                        'seller_location' => $data['seller_location'] ?? null,
-                        'seller_phone_number' => $data['seller_phone_number'] ?? null,
                         'status' => $data['status'] ?? null,
-                        'timestamp' => $data['timestamp'] ?? null,
+                        'buyer_id' => $data['buyer_id'] ?? null,
+                        'product_infos' => $data['product_infos'] ?? [],
+                        'seller_location' => $data['seller_location'] ?? null,
                         'total_amount' => $data['total_amount'] ?? 0,
+                        'timestamp' => $data['timestamp'] ?? null,
                     ];
                     $totalRevenue += $data['total_amount'] ?? 0;
                 }
@@ -53,13 +44,38 @@ class DashboardController extends Controller
             $totalOrders = count($orders);
             $totalUsers = $usersCollection->documents()->size();
             $totalProducts = $productsCollection->documents()->size();
+            
+            // Calculate orders per day instead of daily revenue
+            $ordersPerDay = [];
+            $orderStatusCounts = [];
+
+            foreach ($orders as $order) {
+                $date = isset($order['timestamp'])
+                    ? date('Y-m-d', strtotime($order['timestamp']->__toString()))
+                    : null;
+
+                if ($date) {
+                    $ordersPerDay[$date] = ($ordersPerDay[$date] ?? 0) + 1;
+                }
+
+                $status = $order['status'] ?? 'unknown';
+                $orderStatusCounts[$status] = ($orderStatusCounts[$status] ?? 0) + 1;
+            }
+
+            // Sort by date (newest first)
+            krsort($ordersPerDay);
+
+            // Get only the 10 most recent orders for the table
+            $recentOrders = array_slice($orders, 0, 10);
 
             return view('panel', [
-                'orders' => $orders,
+                'orders' => $recentOrders,
                 'totalOrders' => $totalOrders,
                 'totalUsers' => $totalUsers,
                 'totalProducts' => $totalProducts,
                 'totalRevenue' => $totalRevenue,
+                'ordersPerDay' => $ordersPerDay,
+                'orderStatusCounts' => $orderStatusCounts,
             ]);
         } catch (\Throwable $e) {
             Log::error('Firestore Error: ' . $e->getMessage());
